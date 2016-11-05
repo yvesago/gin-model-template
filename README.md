@@ -2,6 +2,7 @@ Model templates with gorp orm for gin
 ====================================
 
 [![Build Status](https://travis-ci.org/yvesago/gin-model-template.svg?branch=master)](https://travis-ci.org/yvesago/gin-model-template)
+[![Coverage Status](https://coveralls.io/repos/github/yvesago/gin-model-template/badge.svg?branch=master)](https://coveralls.io/github/yvesago/gin-model-template)
 
 ## Description
 
@@ -22,17 +23,18 @@ In your main.go project import ``./models``
 
 Sample :
 
+```go
   package main
-  
+    
   import (
       "fmt"
       "github.com/gin-gonic/gin"
       . "./models"
   )
-  
+    
   func main() {
     r := gin.Default()
-  
+    
     r.Use(Database("test.sqlite3"))
   
     v1 := r.Group("api/v1")
@@ -44,9 +46,14 @@ Sample :
         v1.DELETE("/users/:id", DeleteUser)
         v1.OPTIONS("/users", Options)     // POST
         v1.OPTIONS("/users/:id", Options) // PUT, DELETE
-  ...
-  
+     ...
 
+```
+
+
+## TODO
+
+Refactoring to test query parsing
 
 
 ## Licence
