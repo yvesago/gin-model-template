@@ -4,7 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"gopkg.in/gorp.v1"
 	//"log"
-	"regexp"
 	"strconv"
 	"time"
 )
@@ -21,14 +20,14 @@ or remove sqlite tricks
 
 // XXX custom struct name and fields
 type User struct {
-	Id         int64     `db:"id" json:"id"`
-	Name       string    `db:"name" json:"name"`
-	Email         string    `db:"email" json:"mail"`
-	Status     string    `db:"status" json:"status"`
-	Comment     string    `db:"name:comment, size:16384" json:"comment"`
-	Pass string    `db:"pass" json:"pass"`
-	Created    time.Time `db:"created" json:"created"` // or int64
-	Updated    time.Time `db:"updated" json:"updated"`
+	Id      int64     `db:"id" json:"id"`
+	Name    string    `db:"name" json:"name"`
+	Email   string    `db:"email" json:"mail"`
+	Status  string    `db:"status" json:"status"`
+	Comment string    `db:"comment, size:16384" json:"comment"`
+	Pass    string    `db:"pass" json:"pass"`
+	Created time.Time `db:"created" json:"created"` // or int64
+	Updated time.Time `db:"updated" json:"updated"`
 }
 
 // Hooks : PreInsert and PreUpdate
@@ -51,38 +50,9 @@ func GetUsers(c *gin.Context) {
 	query := "SELECT * FROM user"
 
 	// Parse query string
-	//  receive : map[_filters:[{"q":"wx"}] _sortField:[id] ...
 	q := c.Request.URL.Query()
 	//log.Println(q)
-	if q["_filters"] != nil {
-		re := regexp.MustCompile("{\"([a-zA-Z0-9_]+?)\":\"([a-zA-Z0-9_. ]+?)\"}")
-		r := re.FindStringSubmatch(q["_filters"][0])
-		// TODO: special col name for all fields via reflections
-		col := r[1]
-		search := r[2]
-		if col != "" && search != "" {
-			query = query + " WHERE " + col + " LIKE \"%" + search + "%\" "
-		}
-	}
-	if q["_sortField"] != nil && q["_sortDir"] != nil {
-		sortField := q["_sortField"][0]
-		// prevent SQLi
-		valid := regexp.MustCompile("^[A-Za-z0-9_]+$")
-		if !valid.MatchString(sortField) {
-			sortField = ""
-		}
-		if sortField == "created" || sortField == "updated" { // XXX trick for sqlite
-			sortField = "datetime(" + sortField + ")"
-		}
-		sortOrder := q["_sortDir"][0]
-		if sortOrder != "ASC" {
-			sortOrder = "DESC"
-		}
-		// _page, _perPage, _sortDir, _sortField
-		if sortField != "" {
-			query = query + " ORDER BY " + sortField + " " + sortOrder
-		}
-	}
+	query = query + ParseQuery(q)
 	//log.Println(" -- " + query)
 
 	var users []User
@@ -152,13 +122,13 @@ func UpdateUser(c *gin.Context) {
 		//TODO : find fields via reflections
 		//XXX custom fields mapping
 		user := User{
-			Id:         user_id,
-			Pass:         json.Pass,
-			Name:       json.Name,
-			Email:       json.Email,
-			Status:     json.Status,
-			Comment:     json.Comment,
-			Created:    user.Created, //user read from previous select
+			Id:      user_id,
+			Pass:    json.Pass,
+			Name:    json.Name,
+			Email:   json.Email,
+			Status:  json.Status,
+			Comment: json.Comment,
+			Created: user.Created, //user read from previous select
 		}
 
 		if user.Name != "" { // XXX Check mandatory fields

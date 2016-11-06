@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 )
 
@@ -19,21 +20,19 @@ func TestAgent(t *testing.T) {
 	router := gin.New()
 	router.Use(Database("_test.sqlite3"))
 
-	var url = "/api/v1/agents"
-	router.POST(url, PostAgent)
-	router.GET(url, GetAgents)
-	router.GET(url+"/:id", GetAgent)
-	router.DELETE(url+"/:id", DeleteAgent)
-	router.PUT(url+"/:id", UpdateAgent)
+	var urla = "/api/v1/agents"
+	router.POST(urla, PostAgent)
+	router.GET(urla, GetAgents)
+	router.GET(urla+"/:id", GetAgent)
+	router.DELETE(urla+"/:id", DeleteAgent)
+	router.PUT(urla+"/:id", UpdateAgent)
 
 	// Add
 	log.Println("= http POST Agent")
 	var a = Agent{Name: "Name test", IP: "Ip test"}
 	b := new(bytes.Buffer)
 	json.NewEncoder(b).Encode(a)
-	//b, _ := json.Marshal(a)
-	//var jsonStr = []byte(`{"name":"Name test","ip":"Ip test"}`)
-	req, err := http.NewRequest("POST", url, b)
+	req, err := http.NewRequest("POST", urla, b)
 	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		fmt.Println(err)
@@ -47,7 +46,7 @@ func TestAgent(t *testing.T) {
 	log.Println("= http POST more Agent")
 	var a2 = Agent{Name: "Name test2", IP: "Ip test2"}
 	json.NewEncoder(b).Encode(a2)
-	req, err = http.NewRequest("POST", url, b)
+	req, err = http.NewRequest("POST", urla, b)
 	req.Header.Set("Content-Type", "application/json")
 	resp = httptest.NewRecorder()
 	router.ServeHTTP(resp, req)
@@ -55,7 +54,7 @@ func TestAgent(t *testing.T) {
 
 	// Get all
 	log.Println("= http GET all Agents")
-	req, err = http.NewRequest("GET", url, nil)
+	req, err = http.NewRequest("GET", urla, nil)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -68,10 +67,19 @@ func TestAgent(t *testing.T) {
 	//fmt.Println(len(as))
 	assert.Equal(t, 2, len(as), "2 results")
 
+	log.Println("= Test parsing query")
+	s := "http://127.0.0.1:8080/api?_filters={\"name\":\"t\"}&_sortDir=ASC&_sortField=created"
+	u, _ := url.Parse(s)
+	q, _ := url.ParseQuery(u.RawQuery)
+	//fmt.Println(q)
+	query := ParseQuery(q)
+	//fmt.Println(query)
+	assert.Equal(t, "  WHERE name LIKE \"%t%\"  ORDER BY datetime(created) ASC", query, "Parse query")
+
 	// Get one
 	log.Println("= http GET one Agent")
 	var a1 Agent
-	req, err = http.NewRequest("GET", url+"/1", nil)
+	req, err = http.NewRequest("GET", urla+"/1", nil)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -85,7 +93,7 @@ func TestAgent(t *testing.T) {
 
 	// Delete one
 	log.Println("= http DELETE one Agent")
-	req, err = http.NewRequest("DELETE", url+"/1", nil)
+	req, err = http.NewRequest("DELETE", urla+"/1", nil)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -94,7 +102,7 @@ func TestAgent(t *testing.T) {
 	assert.Equal(t, 200, resp.Code, "http DELETE success")
 	//fmt.Println(a1.Name)
 	//fmt.Println(resp.Body)
-	req, err = http.NewRequest("GET", url, nil)
+	req, err = http.NewRequest("GET", urla, nil)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -111,14 +119,14 @@ func TestAgent(t *testing.T) {
 	//var a4 = Agent{Name: "Name test2 updated", IP: "Ip test2"}
 	a2.Name = "Name test2 updated"
 	json.NewEncoder(b).Encode(a2)
-	req, err = http.NewRequest("PUT", url+"/2", b)
+	req, err = http.NewRequest("PUT", urla+"/2", b)
 	req.Header.Set("Content-Type", "application/json")
 	resp = httptest.NewRecorder()
 	router.ServeHTTP(resp, req)
 	assert.Equal(t, 200, resp.Code, "http PUT success")
 
 	var a3 Agent
-	req, err = http.NewRequest("GET", url+"/2", nil)
+	req, err = http.NewRequest("GET", urla+"/2", nil)
 	if err != nil {
 		fmt.Println(err)
 	}

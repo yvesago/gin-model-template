@@ -53,8 +53,7 @@ Sample :
 
 ## TODO
 
-Refactoring to test query parsing
-
+Sample with config
 
 ## Licence
 

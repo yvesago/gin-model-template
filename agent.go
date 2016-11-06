@@ -4,7 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"gopkg.in/gorp.v1"
 	//"log"
-	"regexp"
 	"strconv"
 	"time"
 )
@@ -54,35 +53,7 @@ func GetAgents(c *gin.Context) {
 	//  receive : map[_filters:[{"q":"wx"}] _sortField:[id] ...
 	q := c.Request.URL.Query()
 	//log.Println(q)
-	if q["_filters"] != nil {
-		re := regexp.MustCompile("{\"([a-zA-Z0-9_]+?)\":\"([a-zA-Z0-9_. ]+?)\"}")
-		r := re.FindStringSubmatch(q["_filters"][0])
-		// TODO: special col name for all fields via reflections
-		col := r[1]
-		search := r[2]
-		if col != "" && search != "" {
-			query = query + " WHERE " + col + " LIKE \"%" + search + "%\" "
-		}
-	}
-	if q["_sortField"] != nil && q["_sortDir"] != nil {
-		sortField := q["_sortField"][0]
-		// prevent SQLi
-		valid := regexp.MustCompile("^[A-Za-z0-9_]+$")
-		if !valid.MatchString(sortField) {
-			sortField = ""
-		}
-		if sortField == "created" || sortField == "updated" { // XXX trick for sqlite
-			sortField = "datetime(" + sortField + ")"
-		}
-		sortOrder := q["_sortDir"][0]
-		if sortOrder != "ASC" {
-			sortOrder = "DESC"
-		}
-		// _page, _perPage, _sortDir, _sortField
-		if sortField != "" {
-			query = query + " ORDER BY " + sortField + " " + sortOrder
-		}
-	}
+	query = query + ParseQuery(q)
 	//log.Println(" -- " + query)
 
 	var agents []Agent
