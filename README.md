@@ -53,7 +53,7 @@ Sample :
 
 ## TODO
 
-Sample with config
+Sample
 
 ## Licence
 

@@ -1,9 +1,9 @@
 package models
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/gorp.v1"
-	//"log"
 	"strconv"
 	"time"
 )
@@ -47,13 +47,16 @@ func (a *User) PreUpdate(s gorp.SqlExecutor) error {
 
 func GetUsers(c *gin.Context) {
 	dbmap := c.MustGet("DBmap").(*gorp.DbMap)
+	verbose := c.MustGet("Verbose").(bool)
 	query := "SELECT * FROM user"
 
 	// Parse query string
 	q := c.Request.URL.Query()
-	//log.Println(q)
 	query = query + ParseQuery(q)
-	//log.Println(" -- " + query)
+	if verbose == true {
+		fmt.Println(q)
+		fmt.Println("query: " + query)
+	}
 
 	var users []User
 	_, err := dbmap.Select(&users, query)
@@ -85,11 +88,14 @@ func GetUser(c *gin.Context) {
 
 func PostUser(c *gin.Context) {
 	dbmap := c.MustGet("DBmap").(*gorp.DbMap)
+	verbose := c.MustGet("Verbose").(bool)
 
 	var user User
 	c.Bind(&user)
 
-	//log.Println(user)
+	if verbose == true {
+		fmt.Println(user)
+	}
 
 	if user.Name != "" { // XXX Check mandatory fields
 		err := dbmap.Insert(&user)
@@ -108,6 +114,7 @@ func PostUser(c *gin.Context) {
 
 func UpdateUser(c *gin.Context) {
 	dbmap := c.MustGet("DBmap").(*gorp.DbMap)
+	verbose := c.MustGet("Verbose").(bool)
 	id := c.Params.ByName("id")
 
 	var user User
@@ -116,7 +123,10 @@ func UpdateUser(c *gin.Context) {
 		var json User
 		c.Bind(&json)
 
-		//log.Println(json)
+		if verbose == true {
+			fmt.Println(json)
+		}
+
 		user_id, _ := strconv.ParseInt(id, 0, 64)
 
 		//TODO : find fields via reflections

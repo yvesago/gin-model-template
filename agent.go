@@ -1,9 +1,9 @@
 package models
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/gorp.v1"
-	//"log"
 	"strconv"
 	"time"
 )
@@ -47,14 +47,16 @@ func (a *Agent) PreUpdate(s gorp.SqlExecutor) error {
 
 func GetAgents(c *gin.Context) {
 	dbmap := c.MustGet("DBmap").(*gorp.DbMap)
+	verbose := c.MustGet("Verbose").(bool)
 	query := "SELECT * FROM agent"
 
 	// Parse query string
-	//  receive : map[_filters:[{"q":"wx"}] _sortField:[id] ...
 	q := c.Request.URL.Query()
-	//log.Println(q)
 	query = query + ParseQuery(q)
-	//log.Println(" -- " + query)
+	if verbose == true {
+		fmt.Println(q)
+		fmt.Println("query: " + query)
+	}
 
 	var agents []Agent
 	_, err := dbmap.Select(&agents, query)
@@ -86,11 +88,14 @@ func GetAgent(c *gin.Context) {
 
 func PostAgent(c *gin.Context) {
 	dbmap := c.MustGet("DBmap").(*gorp.DbMap)
+	verbose := c.MustGet("Verbose").(bool)
 
 	var agent Agent
 	c.Bind(&agent)
 
-	//log.Println(agent)
+	if verbose == true {
+		fmt.Println(agent)
+	}
 
 	if agent.Name != "" && agent.IP != "" { // XXX Check mandatory fields
 		err := dbmap.Insert(&agent)
@@ -109,6 +114,7 @@ func PostAgent(c *gin.Context) {
 
 func UpdateAgent(c *gin.Context) {
 	dbmap := c.MustGet("DBmap").(*gorp.DbMap)
+	verbose := c.MustGet("Verbose").(bool)
 	id := c.Params.ByName("id")
 
 	var agent Agent
@@ -116,8 +122,9 @@ func UpdateAgent(c *gin.Context) {
 	if err == nil {
 		var json Agent
 		c.Bind(&json)
-
-		//log.Println(json)
+		if verbose == true {
+			fmt.Println(json)
+		}
 		agent_id, _ := strconv.ParseInt(id, 0, 64)
 
 		//TODO : find fields via reflections

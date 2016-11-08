@@ -14,11 +14,12 @@ import (
 )
 
 func TestUser(t *testing.T) {
-	defer deleteFile("_test.sqlite3")
+	defer deleteFile(config.DBname)
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	router.Use(Database("_test.sqlite3"))
+	router.Use(SetConfig(config))
+	router.Use(Database(config.DBname))
 
 	var urla = "/api/v1/users"
 	router.POST(urla, PostUser)
@@ -51,6 +52,16 @@ func TestUser(t *testing.T) {
 	resp = httptest.NewRecorder()
 	router.ServeHTTP(resp, req)
 	assert.Equal(t, 201, resp.Code, "http POST success")
+
+	// Test missing mandatory field
+	log.Println("= Test missing mandatory field")
+	var a2x = User{}
+	json.NewEncoder(b).Encode(a2x)
+	req, err = http.NewRequest("POST", urla, b)
+	req.Header.Set("Content-Type", "application/json")
+	resp = httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+	assert.Equal(t, 400, resp.Code, "http POST failed, missing mandatory field")
 
 	// Get all
 	log.Println("= http GET all Users")
