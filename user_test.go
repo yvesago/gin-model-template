@@ -125,6 +125,15 @@ func TestUser(t *testing.T) {
 	//fmt.Println(len(as))
 	assert.Equal(t, 1, len(as), "1 result")
 
+	req, _ = http.NewRequest("GET", urla+"/1", nil)
+	resp = httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+	assert.Equal(t, 404, resp.Code, "No more /1")
+	req, _ = http.NewRequest("DELETE", urla+"/1", nil)
+	resp = httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+	assert.Equal(t, 404, resp.Code, "No more /1")
+
 	// Update one
 	log.Println("= http PUT one User")
 	//var a4 = User{Name: "Name test2 updated"}
@@ -148,5 +157,16 @@ func TestUser(t *testing.T) {
 	//fmt.Println(a1.Name)
 	//fmt.Println(resp.Body)
 	assert.Equal(t, a2.Name, a3.Name, "a2 Name updated")
+
+	req, _ = http.NewRequest("PUT", urla+"/1", b)
+	resp = httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+	assert.Equal(t, 404, resp.Code, "Can't update missing /1")
+
+	json.NewEncoder(b).Encode(a2x)
+	req, _ = http.NewRequest("PUT", urla+"/2", b)
+	resp = httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+	assert.Equal(t, 400, resp.Code, "Can't update missing mandatory field in /2")
 
 }
