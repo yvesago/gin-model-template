@@ -62,6 +62,7 @@ func GetAgents(c *gin.Context) {
 	_, err := dbmap.Select(&agents, query)
 
 	if err == nil {
+		c.Header("X-Total-Count", strconv.Itoa(len(agents)))
 		c.JSON(200, agents)
 	} else {
 		c.JSON(404, gin.H{"error": "no agent(s) into the table"})

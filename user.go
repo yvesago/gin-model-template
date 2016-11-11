@@ -62,6 +62,7 @@ func GetUsers(c *gin.Context) {
 	_, err := dbmap.Select(&users, query)
 
 	if err == nil {
+		c.Header("X-Total-Count", strconv.Itoa(len(users)))
 		c.JSON(200, users)
 	} else {
 		c.JSON(404, gin.H{"error": "no user(s) into the table"})
