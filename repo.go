@@ -8,6 +8,7 @@ import (
 	"gopkg.in/gorp.v1"
 	"log"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -71,18 +72,22 @@ func ParseQuery(q map[string][]string) string {
 		}
 	}
 	// _page, _perPage : LIMIT + OFFSET
+	perPageInt := 0
 	if q["_perPage"] != nil {
 		perPage := q["_perPage"][0]
 		valid := regexp.MustCompile("^[0-9]+$")
 		if valid.MatchString(perPage) {
+			perPageInt, _ = strconv.Atoi(perPage)
 			query = query + " LIMIT " + perPage
 		}
 	}
 	if q["_page"] != nil {
 		page := q["_page"][0]
 		valid := regexp.MustCompile("^[0-9]+$")
-		if valid.MatchString(page) {
-			query = query + " OFFSET " + page
+		pageInt, _ := strconv.Atoi(page)
+		if valid.MatchString(page) && pageInt > 1 {
+			offset := (pageInt-1)*perPageInt + 1
+			query = query + " OFFSET " + strconv.Itoa(offset)
 		}
 	}
 	return query
