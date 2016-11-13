@@ -2,11 +2,13 @@ package models
 
 import (
 	"database/sql"
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"
 	"gopkg.in/gorp.v1"
 	"log"
 	"regexp"
+	"strings"
 )
 
 // gin Middlware to select database
@@ -36,13 +38,18 @@ func InitDb(dbName string) *gorp.DbMap {
 func ParseQuery(q map[string][]string) string {
 	query := " "
 	if q["_filters"] != nil {
-		re := regexp.MustCompile("{\"([a-zA-Z0-9_]+?)\":\"([a-zA-Z0-9_. ]+?)\"}")
-		r := re.FindStringSubmatch(q["_filters"][0])
-		// TODO: special col name for all fields via reflections
-		col := r[1]
-		search := r[2]
-		if col != "" && search != "" {
-			query = query + " WHERE " + col + " LIKE \"%" + search + "%\" "
+		data := make(map[string]string)
+		err := json.Unmarshal([]byte(q["_filters"][0]), &data)
+		if err == nil {
+			query = query + " WHERE "
+			var searches []string
+			for col, search := range data {
+				valid := regexp.MustCompile("^[A-Za-z0-9_]+$")
+				if col != "" && search != "" && valid.MatchString(col) && valid.MatchString(search) {
+					searches = append(searches, col+" LIKE \"%"+search+"%\"")
+				}
+			}
+			query = query + strings.Join(searches, " AND ") // TODO join with OR for same keys
 		}
 	}
 	if q["_sortField"] != nil && q["_sortDir"] != nil {
@@ -63,21 +70,21 @@ func ParseQuery(q map[string][]string) string {
 			query = query + " ORDER BY " + sortField + " " + sortOrder
 		}
 	}
-    // _page, _perPagea : LIMIT + OFFSET
-    if q["_perPage"] != nil {
-        perPage := q["_perPage"][0]
-        valid := regexp.MustCompile("^[0-9]+$")
-        if valid.MatchString(perPage) {
-            query = query + " LIMIT " + perPage
-        }
-    }
-    if q["_page"] != nil {
-        page := q["_page"][0]
-        valid := regexp.MustCompile("^[0-9]+$")
-        if valid.MatchString(page) {
-            query = query + " OFFSET " + page
-        }
-    }
+	// _page, _perPage : LIMIT + OFFSET
+	if q["_perPage"] != nil {
+		perPage := q["_perPage"][0]
+		valid := regexp.MustCompile("^[0-9]+$")
+		if valid.MatchString(perPage) {
+			query = query + " LIMIT " + perPage
+		}
+	}
+	if q["_page"] != nil {
+		page := q["_page"][0]
+		valid := regexp.MustCompile("^[0-9]+$")
+		if valid.MatchString(page) {
+			query = query + " OFFSET " + page
+		}
+	}
 	return query
 }
 

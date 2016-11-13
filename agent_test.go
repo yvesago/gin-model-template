@@ -85,7 +85,7 @@ func TestAgent(t *testing.T) {
 	//fmt.Println(q)
 	query := ParseQuery(q)
 	//fmt.Println(query)
-	assert.Equal(t, "  WHERE name LIKE \"%t%\"  ORDER BY datetime(created) ASC", query, "Parse query")
+	assert.Equal(t, "  WHERE name LIKE \"%t%\" ORDER BY datetime(created) ASC", query, "Parse query")
 
 	log.Println("= Test parsing page query")
 	s = "http://127.0.0.1:8080/api?_perPage=5&_page=1"
@@ -95,6 +95,21 @@ func TestAgent(t *testing.T) {
 	query = ParseQuery(q)
 	//fmt.Println(query)
 	assert.Equal(t, "  LIMIT 5 OFFSET 1", query, "Parse query")
+
+	log.Println("= Test parsing multi filter query")
+	s = "http://127.0.0.1:8080/api?_filters={\"line\":\"t\",\"line2\":\"t2\"}&_sortDir=DESC&_sortField=created"
+	u, _ = url.Parse(s)
+	q, _ = url.ParseQuery(u.RawQuery)
+	//fmt.Println(q)
+	query = ParseQuery(q)
+	//fmt.Println(query)
+
+	// Managed unsorted queries map
+	res1 := "  WHERE line LIKE \"%t%\" AND line2 LIKE \"%t2%\" ORDER BY datetime(created) DESC"
+	res2 := "  WHERE line2 LIKE \"%t2%\" AND line LIKE \"%t%\" ORDER BY datetime(created) DESC"
+	if res1 != query && res2 != query {
+		assert.Equal(t, res1+" -- OR -- "+res2, query, "Parse query")
+	}
 
 	// Get one
 	log.Println("= http GET one Agent")
