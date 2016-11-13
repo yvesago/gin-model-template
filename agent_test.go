@@ -87,6 +87,15 @@ func TestAgent(t *testing.T) {
 	//fmt.Println(query)
 	assert.Equal(t, "  WHERE name LIKE \"%t%\"  ORDER BY datetime(created) ASC", query, "Parse query")
 
+	log.Println("= Test parsing page query")
+	s = "http://127.0.0.1:8080/api?_perPage=5&_page=1"
+	u, _ = url.Parse(s)
+	q, _ = url.ParseQuery(u.RawQuery)
+	//fmt.Println(q)
+	query = ParseQuery(q)
+	//fmt.Println(query)
+	assert.Equal(t, "  LIMIT 5 OFFSET 1", query, "Parse query")
+
 	// Get one
 	log.Println("= http GET one Agent")
 	var a1 Agent

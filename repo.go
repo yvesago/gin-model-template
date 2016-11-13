@@ -59,11 +59,25 @@ func ParseQuery(q map[string][]string) string {
 		if sortOrder != "ASC" {
 			sortOrder = "DESC"
 		}
-		//TODO _page, _perPage, _sortDir, _sortField
 		if sortField != "" {
 			query = query + " ORDER BY " + sortField + " " + sortOrder
 		}
 	}
+    // _page, _perPagea : LIMIT + OFFSET
+    if q["_perPage"] != nil {
+        perPage := q["_perPage"][0]
+        valid := regexp.MustCompile("^[0-9]+$")
+        if valid.MatchString(perPage) {
+            query = query + " LIMIT " + perPage
+        }
+    }
+    if q["_page"] != nil {
+        page := q["_page"][0]
+        valid := regexp.MustCompile("^[0-9]+$")
+        if valid.MatchString(page) {
+            query = query + " OFFSET " + page
+        }
+    }
 	return query
 }
 
