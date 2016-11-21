@@ -32,12 +32,14 @@ type User struct {
 
 // Hooks : PreInsert and PreUpdate
 
+// PreInsert set created an updated time before insert in db
 func (a *User) PreInsert(s gorp.SqlExecutor) error {
 	a.Created = time.Now() // or time.Now().UnixNano()
 	a.Updated = a.Created
 	return nil
 }
 
+// PreUpdate set updated time before insert in db
 func (a *User) PreUpdate(s gorp.SqlExecutor) error {
 	a.Updated = time.Now()
 	return nil
@@ -45,6 +47,7 @@ func (a *User) PreUpdate(s gorp.SqlExecutor) error {
 
 // REST handlers
 
+// GetUsers return all users filtered by URL query
 func GetUsers(c *gin.Context) {
 	dbmap := c.MustGet("DBmap").(*gorp.DbMap)
 	verbose := c.MustGet("Verbose").(bool)
@@ -71,6 +74,7 @@ func GetUsers(c *gin.Context) {
 	// curl -i http://localhost:8080/api/v1/users
 }
 
+// GetUser return one user by id
 func GetUser(c *gin.Context) {
 	dbmap := c.MustGet("DBmap").(*gorp.DbMap)
 	id := c.Params.ByName("id")
@@ -87,6 +91,7 @@ func GetUser(c *gin.Context) {
 	// curl -i http://localhost:8080/api/v1/users/1
 }
 
+// PostUser create and return one user
 func PostUser(c *gin.Context) {
 	dbmap := c.MustGet("DBmap").(*gorp.DbMap)
 	verbose := c.MustGet("Verbose").(bool)
@@ -113,6 +118,7 @@ func PostUser(c *gin.Context) {
 	// curl -i -X POST -H "Content-Type: application/json" -d "{ \"firstname\": \"Thea\", \"lastname\": \"Queen\" }" http://localhost:8080/api/v1/users
 }
 
+// UpdateUser update one user by id
 func UpdateUser(c *gin.Context) {
 	dbmap := c.MustGet("DBmap").(*gorp.DbMap)
 	verbose := c.MustGet("Verbose").(bool)
@@ -128,12 +134,12 @@ func UpdateUser(c *gin.Context) {
 			fmt.Println(json)
 		}
 
-		user_id, _ := strconv.ParseInt(id, 0, 64)
+		userId, _ := strconv.ParseInt(id, 0, 64)
 
 		//TODO : find fields via reflections
 		//XXX custom fields mapping
 		user := User{
-			Id:      user_id,
+			Id:      userId,
 			Pass:    json.Pass,
 			Name:    json.Name,
 			Email:   json.Email,
@@ -161,6 +167,7 @@ func UpdateUser(c *gin.Context) {
 	// curl -i -X PUT -H "Content-Type: application/json" -d "{ \"firstname\": \"Thea\", \"lastname\": \"Merlyn\" }" http://localhost:8080/api/v1/users/1
 }
 
+// DeleteUser delete one user by id
 func DeleteUser(c *gin.Context) {
 	dbmap := c.MustGet("DBmap").(*gorp.DbMap)
 	id := c.Params.ByName("id")

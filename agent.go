@@ -32,12 +32,14 @@ type Agent struct {
 
 // Hooks : PreInsert and PreUpdate
 
+// PreInsert set created an updated time before insert in db
 func (a *Agent) PreInsert(s gorp.SqlExecutor) error {
 	a.Created = time.Now() // or time.Now().UnixNano()
 	a.Updated = a.Created
 	return nil
 }
 
+// PreUpdate set updated time before insert in db
 func (a *Agent) PreUpdate(s gorp.SqlExecutor) error {
 	a.Updated = time.Now()
 	return nil
@@ -45,6 +47,7 @@ func (a *Agent) PreUpdate(s gorp.SqlExecutor) error {
 
 // REST handlers
 
+// GetAgents return all agents filtered by URL query
 func GetAgents(c *gin.Context) {
 	dbmap := c.MustGet("DBmap").(*gorp.DbMap)
 	verbose := c.MustGet("Verbose").(bool)
@@ -71,6 +74,7 @@ func GetAgents(c *gin.Context) {
 	// curl -i http://localhost:8080/api/v1/agents
 }
 
+// GetAgent return one agent by id
 func GetAgent(c *gin.Context) {
 	dbmap := c.MustGet("DBmap").(*gorp.DbMap)
 	id := c.Params.ByName("id")
@@ -87,6 +91,7 @@ func GetAgent(c *gin.Context) {
 	// curl -i http://localhost:8080/api/v1/agents/1
 }
 
+// PostAgent create and return agent
 func PostAgent(c *gin.Context) {
 	dbmap := c.MustGet("DBmap").(*gorp.DbMap)
 	verbose := c.MustGet("Verbose").(bool)
@@ -113,6 +118,7 @@ func PostAgent(c *gin.Context) {
 	// curl -i -X POST -H "Content-Type: application/json" -d "{ \"firstname\": \"Thea\", \"lastname\": \"Queen\" }" http://localhost:8080/api/v1/agents
 }
 
+// UpdateAgent by id
 func UpdateAgent(c *gin.Context) {
 	dbmap := c.MustGet("DBmap").(*gorp.DbMap)
 	verbose := c.MustGet("Verbose").(bool)
@@ -126,12 +132,12 @@ func UpdateAgent(c *gin.Context) {
 		if verbose == true {
 			fmt.Println(json)
 		}
-		agent_id, _ := strconv.ParseInt(id, 0, 64)
+		agentId, _ := strconv.ParseInt(id, 0, 64)
 
 		//TODO : find fields via reflections
 		//XXX custom fields mapping
 		agent := Agent{
-			Id:         agent_id,
+			Id:         agentId,
 			IP:         json.IP,
 			Name:       json.Name,
 			Role:       json.Role,
@@ -159,6 +165,7 @@ func UpdateAgent(c *gin.Context) {
 	// curl -i -X PUT -H "Content-Type: application/json" -d "{ \"firstname\": \"Thea\", \"lastname\": \"Merlyn\" }" http://localhost:8080/api/v1/agents/1
 }
 
+// DeleteAgent by id
 func DeleteAgent(c *gin.Context) {
 	dbmap := c.MustGet("DBmap").(*gorp.DbMap)
 	id := c.Params.ByName("id")

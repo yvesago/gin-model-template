@@ -3,6 +3,7 @@ Model templates with gorp orm for gin
 
 [![Build Status](https://travis-ci.org/yvesago/gin-model-template.svg?branch=master)](https://travis-ci.org/yvesago/gin-model-template)
 [![Coverage Status](https://coveralls.io/repos/github/yvesago/gin-model-template/badge.svg?branch=master)](https://coveralls.io/github/yvesago/gin-model-template)
+[![Go Report Card](https://goreportcard.com/badge/github.com/yvesago/gin-model-template)](https://goreportcard.com/report/github.com/yvesago/gin-model-template)
 
 ## Description
 
