@@ -19,6 +19,7 @@ or remove sqlite tricks
 **/
 
 // XXX custom struct name and fields
+// Agent db and json type
 type Agent struct {
 	Id         int64     `db:"id" json:"id"`
 	Name       string    `db:"name" json:"name"`

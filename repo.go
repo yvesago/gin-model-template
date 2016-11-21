@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-// gin Middlware to select database
+// Database gin Middlware to select database
 func Database(connString string) gin.HandlerFunc {
 	dbmap := InitDb(connString)
 	return func(c *gin.Context) {
@@ -21,6 +21,7 @@ func Database(connString string) gin.HandlerFunc {
 	}
 }
 
+// InitDb set or create db
 func InitDb(dbName string) *gorp.DbMap {
 	// XXX fix database type
 	db, err := sql.Open("sqlite3", dbName)
@@ -36,6 +37,7 @@ func InitDb(dbName string) *gorp.DbMap {
 	return dbmap
 }
 
+// ParseQuery parse query to set select SQL query
 func ParseQuery(q map[string][]string) string {
 	query := " "
 	if q["_filters"] != nil {
