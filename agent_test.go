@@ -83,39 +83,49 @@ func TestAgent(t *testing.T) {
 	u, _ := url.Parse(s)
 	q, _ := url.ParseQuery(u.RawQuery)
 	//fmt.Println(q)
-	query := ParseQuery(q)
+	query, sort, limit := ParseQuery(q)
 	//fmt.Println(query)
-	assert.Equal(t, "  WHERE name LIKE \"%t%\" ORDER BY datetime(created) ASC", query, "Parse query")
+	assert.Equal(t, "name LIKE \"%t%\"", query, "Parse query")
+	assert.Equal(t, " ORDER BY datetime(created) ASC", sort, "Parse query")
 
 	log.Println("= Test parsing page query")
 	s = "http://127.0.0.1:8080/api?_perPage=5&_page=1"
 	u, _ = url.Parse(s)
 	q, _ = url.ParseQuery(u.RawQuery)
 	//fmt.Println(q)
-	query = ParseQuery(q)
+	query, sort, limit = ParseQuery(q)
 	//fmt.Println(query)
-	assert.Equal(t, "  LIMIT 5", query, "Parse query")
+	assert.Equal(t, " LIMIT 5", limit, "Parse query")
 
 	log.Println("= Test parsing page query")
 	s = "http://127.0.0.1:8080/api?_perPage=5&_page=2"
 	u, _ = url.Parse(s)
 	q, _ = url.ParseQuery(u.RawQuery)
 	//fmt.Println(q)
-	query = ParseQuery(q)
+	query, sort, limit = ParseQuery(q)
 	//fmt.Println(query)
-	assert.Equal(t, "  LIMIT 5 OFFSET 6", query, "Parse query")
+	assert.Equal(t, " LIMIT 5 OFFSET 6", limit, "Parse query")
+
+	log.Println("= Test parsing start end query")
+	s = "http://127.0.0.1:8080/api?_start=2&_end=4"
+	u, _ = url.Parse(s)
+	q, _ = url.ParseQuery(u.RawQuery)
+	//fmt.Println(q)
+	query, sort, limit = ParseQuery(q)
+	//fmt.Println(query)
+	assert.Equal(t, " LIMIT 1, 3", limit, "Parse query")
 
 	log.Println("= Test parsing multi filter query")
 	s = "http://127.0.0.1:8080/api?_filters={\"line\":\"t\",\"line2\":\"t2\"}&_sortDir=DESC&_sortField=created"
 	u, _ = url.Parse(s)
 	q, _ = url.ParseQuery(u.RawQuery)
 	//fmt.Println(q)
-	query = ParseQuery(q)
+	query, sort, limit = ParseQuery(q)
 	//fmt.Println(query)
 
 	// Managed unsorted queries map
-	res1 := "  WHERE line LIKE \"%t%\" AND line2 LIKE \"%t2%\" ORDER BY datetime(created) DESC"
-	res2 := "  WHERE line2 LIKE \"%t2%\" AND line LIKE \"%t%\" ORDER BY datetime(created) DESC"
+	res1 := "line LIKE \"%t%\" AND line2 LIKE \"%t2%\""
+	res2 := "line2 LIKE \"%t2%\" AND line LIKE \"%t%\""
 	if res1 != query && res2 != query {
 		assert.Equal(t, res1+" -- OR -- "+res2, query, "Parse query")
 	}

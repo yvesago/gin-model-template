@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"
-	"gopkg.in/gorp.v1"
+	"gopkg.in/gorp.v2"
 	"log"
 	"regexp"
 	"strconv"
@@ -38,16 +38,15 @@ func InitDb(dbName string) *gorp.DbMap {
 }
 
 // ParseQuery parse query to set select SQL query
-func ParseQuery(q map[string][]string) string {
-	query := " "
+func ParseQuery(q map[string][]string) (string, string, string) {
+	query := ""
 	if q["_filters"] != nil {
 		data := make(map[string]string)
 		err := json.Unmarshal([]byte(q["_filters"][0]), &data)
 		if err == nil {
-			query = query + " WHERE "
 			var searches []string
 			for col, search := range data {
-				valid := regexp.MustCompile("^[A-Za-z0-9_]+$")
+				valid := regexp.MustCompile("^[A-Za-z0-9_.]+$")
 				if col != "" && search != "" && valid.MatchString(col) && valid.MatchString(search) {
 					searches = append(searches, col+" LIKE \"%"+search+"%\"")
 				}
@@ -55,6 +54,8 @@ func ParseQuery(q map[string][]string) string {
 			query = query + strings.Join(searches, " AND ") // TODO join with OR for same keys
 		}
 	}
+
+	sort := ""
 	if q["_sortField"] != nil && q["_sortDir"] != nil {
 		sortField := q["_sortField"][0]
 		// prevent SQLi
@@ -70,9 +71,11 @@ func ParseQuery(q map[string][]string) string {
 			sortOrder = "DESC"
 		}
 		if sortField != "" {
-			query = query + " ORDER BY " + sortField + " " + sortOrder
+			sort = " ORDER BY " + sortField + " " + sortOrder
 		}
 	}
+
+	limit := ""
 	// _page, _perPage : LIMIT + OFFSET
 	perPageInt := 0
 	if q["_perPage"] != nil {
@@ -80,19 +83,36 @@ func ParseQuery(q map[string][]string) string {
 		valid := regexp.MustCompile("^[0-9]+$")
 		if valid.MatchString(perPage) {
 			perPageInt, _ = strconv.Atoi(perPage)
-			query = query + " LIMIT " + perPage
+			limit = " LIMIT " + perPage
 		}
 	}
 	if q["_page"] != nil {
 		page := q["_page"][0]
 		valid := regexp.MustCompile("^[0-9]+$")
 		pageInt, _ := strconv.Atoi(page)
+
 		if valid.MatchString(page) && pageInt > 1 {
 			offset := (pageInt-1)*perPageInt + 1
-			query = query + " OFFSET " + strconv.Itoa(offset)
+			limit = limit + " OFFSET " + strconv.Itoa(offset)
 		}
 	}
-	return query
+
+	// _start, _end : LIMIT start, size
+	if q["_start"] != nil && q["_end"] != nil {
+		start := q["_start"][0]
+		end := q["_end"][0]
+		valid := regexp.MustCompile("^[0-9]+$")
+		startInt, _ := strconv.Atoi(start)
+		endInt, _ := strconv.Atoi(end)
+		startInt = startInt - 1 // indice start from 0
+
+		if valid.MatchString(start) && valid.MatchString(end) && endInt > startInt {
+			size := endInt - startInt
+			limit = " LIMIT " + strconv.Itoa(startInt) + ", " + strconv.Itoa(size)
+		}
+	}
+
+	return query, sort, limit
 }
 
 func checkErr(err error, msg string) {

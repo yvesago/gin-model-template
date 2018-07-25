@@ -3,7 +3,7 @@ package models
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"gopkg.in/gorp.v1"
+	"gopkg.in/gorp.v2"
 	"strconv"
 	"time"
 )
@@ -56,7 +56,21 @@ func GetUsers(c *gin.Context) {
 
 	// Parse query string
 	q := c.Request.URL.Query()
-	query = query + ParseQuery(q)
+	s, o, l := ParseQuery(q)
+	var count int64
+	if s != "" {
+		count, _ = dbmap.SelectInt("SELECT COUNT(*) FROM user  WHERE " + s)
+		query = query + " WHERE " + s
+	} else {
+		count, _ = dbmap.SelectInt("SELECT COUNT(*) FROM user")
+	}
+	if o != "" {
+		query = query + o
+	}
+	if l != "" {
+		query = query + l
+	}
+
 	if verbose == true {
 		fmt.Println(q)
 		fmt.Println("query: " + query)
@@ -66,7 +80,7 @@ func GetUsers(c *gin.Context) {
 	_, err := dbmap.Select(&users, query)
 
 	if err == nil {
-		c.Header("X-Total-Count", strconv.Itoa(len(users)))
+		c.Header("X-Total-Count", strconv.FormatInt(count, 10)) // float64 to string
 		c.JSON(200, users)
 	} else {
 		c.JSON(404, gin.H{"error": "no user(s) into the table"})
