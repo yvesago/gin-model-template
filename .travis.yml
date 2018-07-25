@@ -1,7 +1,7 @@
 language: go
 sudo: false
 go:
-  - 1.6
+  - 1.8
   - tip
 
 script:
@@ -9,7 +9,7 @@ script:
   - go get github.com/mattn/goveralls
   - go get github.com/gin-gonic/gin
   - go get github.com/mattn/go-sqlite3
-  - go get gopkg.in/gorp.v1
+  - go get gopkg.in/gorp.v2
   - go test -v -covermode=count -coverprofile=coverage.out
 
 after_success:
