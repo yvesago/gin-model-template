@@ -52,9 +52,6 @@ Sample :
 ```
 
 
-## TODO
-
-Sample
 
 ## Licence
 
